@@ -2,30 +2,29 @@ import mongoose from 'mongoose'
 
 const userSchema = mongoose.Schema({
     _id: {
-        type:String,
+        type: String,
         required: true
     },
     username: {
-        type:String,
+        type: String,
         required: true
     },
     email: {
-        type:String,
+        type: String,
         required: true
     },
     image: {
-        type:String,
+        type: String,
         required: true
     },
     role: {
-        type:String,
+        type: String,
         enum: ['user', 'hotelOwner'],
         default: "user"
     },
     recentSearchedCities: [{type: String, required: true}]
-}, {timestamps:true}
-)
+}, {timestamps: true})
 
-const User= mongoose.moodel("User", userSchema)
+const User = mongoose.model("User", userSchema)  // Fixed: "model" not "moodel"
 
 export default User
