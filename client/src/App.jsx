@@ -11,20 +11,28 @@ import Layout from './pages/hotelOwner/Layout'
 import Dashboard from './pages/hotelOwner/Dashboard'
 import AddRoom from './pages/hotelOwner/AddRoom'
 import ListRoom from './pages/hotelOwner/ListRoom'
+import {Toaster} from 'react-hot-toast'
+import { useAppContext } from './context/AppContext'
+import Login from './Auth/Login'
+import Signup from './Auth/Signup'
 
 const App = () => {
   const location = useLocation();
   const isOwnerPath = location.pathname.includes("owner");
+  const {showHotelReg} = useAppContext()
 
   return (
     <div>
+      <Toaster/>
       {/* Only show navbar/footer outside the hotelOwner dashboard area */}
       {!isOwnerPath && <Navbar />}
-
+      {showHotelReg && <HotelReg/>}
       <div className='min-h-[70vh]'>
         <Routes>
           {/* Public Routes */}
           <Route path='/' element={<Home />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/signup' element={<Signup />} />
           <Route path='/rooms' element={<AllRooms />} />
           <Route path='/rooms/:id' element={<RoomDetails />} />
           <Route path='/my-bookings' element={<Mybookings />} />

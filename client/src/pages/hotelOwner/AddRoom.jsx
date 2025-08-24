@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
 import Title from '../../components/Title'
 import { assets } from '../../assets/assets'
+import { useAppContext } from '../../context/AppContext'
+import toast from 'react-hot-toast'
 
 const AddRoom = () => {
+  const {api, getToken} = useAppContext() ; 
   const [images, setImages] = useState({1 : null, 2: null, 3: null, 4: null})
 
   const [input, setInput] = useState({
@@ -16,8 +19,68 @@ const AddRoom = () => {
       'Pool Access' : false
     }
   })
+
+  const [loading, setLoading] = useState();
+
+const onSubmitHandler = async (e) => {
+  e.preventDefault();
+
+  if (
+    !input.roomType ||
+    !input.pricePerNight ||
+    !Object.values(images).some((image) => image)
+  ) {
+    toast.error("Please fill all the details");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const formData = new FormData();
+    formData.append("roomType", input.roomType);
+    formData.append("pricePerNight", input.pricePerNight);
+
+    const amenities = Object.keys(input.amenities).filter(
+      (key) => input.amenities[key]
+    );
+    formData.append("amenities", JSON.stringify(amenities));
+
+    Object.keys(images).forEach((key) => {
+      if (images[key]) formData.append("images", images[key]);
+    });
+
+    const token = getToken();
+    const { data } = await api.post("/rooms", formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (data.success) {
+      toast.success(data.message);
+      setInput({
+        roomType: "",
+        pricePerNight: 0,
+        amenities: {
+          "Free Wifi": false,
+          "Free Breakfast": false,
+          "Room Service": false,
+          "Mountain View": false,
+          "Pool Access": false,
+        },
+      });
+      setImages({ 1: null, 2: null, 3: null, 4: null });
+    } else {
+      toast.error(data.message);
+    }
+  } catch (error) {
+    toast.error(error.response?.data?.message || error.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   return (
-    <form >
+    <form onSubmit={onSubmitHandler}>
        <Title align='left' font='outfit' title='Add Room' subTitle='Fill in the details carefully and accurate room details, pricing
        , and amenities, to enhance the user booking experience'/>
 
@@ -67,7 +130,7 @@ const AddRoom = () => {
              
           ))}
        </div>
-       <button className='bg-blue-800 text-white px-5 py-2 mt-5 rounded-md '>Add Room</button>
+       <button className='bg-blue-800 text-white px-5 py-2 mt-5 rounded-md ' disabled={loading}>{loading ? 'Adding...' : 'Add Room'}</button>
     </form>
   )
 }

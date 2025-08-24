@@ -1,6 +1,5 @@
 import React from 'react'
 import { assets } from '../../assets/assets'
-import { UserButton } from '@clerk/clerk-react'
 import { Link } from 'react-router-dom'
 
 const Navbar = () => {
@@ -10,7 +9,7 @@ const Navbar = () => {
          <img src={assets.logo} alt="logo" className='h-9 invert opacity-80'/>
        </Link>
 
-       <UserButton/>
+       {/* <UserButton/> */}
     </div>
   )
 }
