@@ -3,15 +3,20 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAppContext } from '../context/AppContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  // 🔑 FIXED: Move useAppContext to top level of component
+  const { refetchUser, api } = useAppContext();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
+    // 🔑 REMOVED: const { refetchUser, api } = useAppContext(); - this was the problem!
     if (e) e.preventDefault();
     if (!email || !password) {
       toast.error("All fields are required!");
@@ -21,7 +26,7 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
 
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await api.post("/auth/login", {  // 🔑 FIXED: Remove full URL, use relative path
         email,
         password,
       }, {
@@ -32,9 +37,12 @@ export default function LoginPage() {
       console.log("🚀 Logged in user from backend:", user);
 
       if (token) {
-        // Save in localStorage or context
+        // Save token first
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
+        
+        // 🔑 Then refetch user data
+        await refetchUser(); 
 
         toast.success("Logged in successfully! 🎉");
         navigate("/");
@@ -78,7 +86,7 @@ export default function LoginPage() {
             </div>
 
             {/* Form */}
-            <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Field */}
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -142,8 +150,7 @@ export default function LoginPage() {
 
               {/* Submit Button */}
               <button
-                type="button"
-                onClick={handleSubmit}
+                type="submit"
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 px-6 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed group"
               >
@@ -161,10 +168,8 @@ export default function LoginPage() {
                   )}
                 </span>
               </button>
-            </div>
+            </form>
 
-
-    
             {/* Sign Up Link */}
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-600">

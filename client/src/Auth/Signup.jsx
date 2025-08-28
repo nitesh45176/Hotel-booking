@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight } from 'lucide-react';
-import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../context/AppContext'; // 🔑 Import context
 
 export default function SignupPage() {
+  const navigate = useNavigate();
+  // 🔑 FIXED: Move useAppContext to top level of component
+  const { refetchUser, api } = useAppContext();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -15,7 +19,6 @@ export default function SignupPage() {
     confirmPassword: ''
   });
   const [isLoading, setIsLoading] = useState(false);
- const navigate = useNavigate();
  
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
@@ -24,7 +27,15 @@ export default function SignupPage() {
     }));
   };
 
-   const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    
+    // Validation
+    if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
+      toast.error("All fields are required!");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match!");
       return;
@@ -33,25 +44,25 @@ export default function SignupPage() {
     try {
       setIsLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:3000/api/auth/register",
-        {
-          fullName: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      // 🔑 FIXED: Use api instance with relative path
+      const res = await api.post("/auth/register", {
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      }, {
+        headers: { "Content-Type": "application/json" },
+      });
 
       const { token, user } = res.data;
       console.log("🚀 Registered user from backend:", user);
 
       if (token) {
-        // Store in localStorage (or call your context login function)
+        // Store token first
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
+
+        // 🔑 Then refetch user data
+        await refetchUser();
 
         // ✅ Show success toast
         toast.success("Account created successfully! 🎉");
@@ -71,6 +82,7 @@ export default function SignupPage() {
       setIsLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen bg-[url('/src/assets/heroImage.png')] bg-cover bg-center bg-no-repeat relative overflow-hidden">
       {/* Dark overlay for better readability */}
@@ -107,7 +119,7 @@ export default function SignupPage() {
             </div>
 
             {/* Form */}
-            <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Full Name Field */}
               <div className="space-y-2">
                 <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
@@ -146,7 +158,6 @@ export default function SignupPage() {
                 </div>
               </div>
 
-            
               {/* Password Field */}
               <div className="space-y-2">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
@@ -226,8 +237,7 @@ export default function SignupPage() {
 
               {/* Submit Button */}
               <button
-                type="button"
-                onClick={handleSubmit}
+                type="submit"
                 disabled={isLoading}
                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 px-6 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed group"
               >
@@ -245,15 +255,15 @@ export default function SignupPage() {
                   )}
                 </span>
               </button>
-            </div>
+            </form>
 
             {/* Sign In Link */}
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-700">
                 Already have an account?{' '}
-                <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
+                <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors">
                   Sign in here
-                </a>
+                </Link>
               </p>
             </div>
           </div>

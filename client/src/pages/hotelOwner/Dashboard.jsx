@@ -3,10 +3,9 @@ import Title from '../../components/Title'
 import { assets } from '../../assets/assets'
 import { useAppContext } from '../../context/AppContext'
 
-
 const Dashboard = () => {
 
-  const {currency, user, getToken, toast, api} =useAppContext();
+  const {currency, user, getToken, toast, api} = useAppContext();
    
   const [dashboardData, setDashboardData] = useState({
     bookings: [],
@@ -21,10 +20,11 @@ const Dashboard = () => {
       if(data.success){
         setDashboardData(data.dashboardData)
       }else{
-        toast.error(data.message)
+        toast?.error(data.message || 'Failed to fetch dashboard data')
       }
     } catch (error) {
-      toast.error(error.message)
+      console.error('Dashboard fetch error:', error)
+      toast?.error(error?.message || error?.response?.data?.message || 'An error occurred while fetching dashboard data')
     }
   }
 
@@ -65,14 +65,9 @@ const Dashboard = () => {
                 <thead className='bg-gray-50'>
                     <tr>
                       <th className='py-3 px-4 text-gray-800 font-medium'>User Name</th>
-
                       <th className='py-3 px-4 text-gray-800 font-medium max-sm:hidden'>Room Name</th>
-
                       <th className='py-3 px-4 text-gray-800 font-medium text-center'>Total Amount</th>
-
                       <th className='py-3 px-4 text-gray-800 font-medium text-center'>Payment Status</th>
-
-                     
                     </tr>
                 </thead>
 
@@ -80,20 +75,19 @@ const Dashboard = () => {
                     {dashboardData.bookings.map((item, index)=> (
                       <tr key={index}>
                          <td className='py-3 px-4 text-gray-700 border-t border-gray-300'>
-                           {item.user.username}
+                           {item.user?.username || 'N/A'}
                          </td>
-                           <td className='py-3 px-4 text-gray-700 border-t border-gray-300 max-sm:hidden'>
-                           {item.room.roomType}
+                         <td className='py-3 px-4 text-gray-700 border-t border-gray-300 max-sm:hidden'>
+                           {item.room?.roomType || 'N/A'}
                          </td>
-                           <td className='py-3 px-4 text-gray-700 border-t border-gray-300 text-center'>
-                           {currency} {item.totalPrice}
+                         <td className='py-3 px-4 text-gray-700 border-t border-gray-300 text-center'>
+                           {currency} {item.totalPrice || 0}
                          </td>
-                           <td className='py-3 px-4 text-gray-700 border-t border-gray-300 flex'>
+                         <td className='py-3 px-4 text-gray-700 border-t border-gray-300 flex'>
                             <button className={`py-1 px-3 text-xs rounded-full mx-auto ${item.isPaid ? 'bg-green-200 text-green-600' : 'bg-amber-200 text-yellow-600'}`}>
                                  {item.isPaid ? 'Completed' : 'Pending'}
                             </button>
                          </td>
-
                       </tr>
                     ))}
                 </tbody>

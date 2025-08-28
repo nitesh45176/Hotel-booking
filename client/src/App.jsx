@@ -15,6 +15,7 @@ import {Toaster} from 'react-hot-toast'
 import { useAppContext } from './context/AppContext'
 import Login from './Auth/Login'
 import Signup from './Auth/Signup'
+import About from './components/About'
 
 const App = () => {
   const location = useLocation();
@@ -33,6 +34,7 @@ const App = () => {
           <Route path='/' element={<Home />} />
           <Route path='/login' element={<Login />} />
           <Route path='/signup' element={<Signup />} />
+          <Route path='/about' element={<About />} />
           <Route path='/rooms' element={<AllRooms />} />
           <Route path='/rooms/:id' element={<RoomDetails />} />
           <Route path='/my-bookings' element={<Mybookings />} />

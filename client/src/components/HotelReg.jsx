@@ -4,7 +4,7 @@ import { useAppContext } from "../context/AppContext";
 import {toast} from 'react-hot-toast'
 
 const HotelReg = () => {
-  const { setShowHotelReg, axios, getToken, setIsOwner } = useAppContext();
+  const { setShowHotelReg, api, getToken, setIsOwner } = useAppContext();
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -14,8 +14,8 @@ const HotelReg = () => {
   const onSubmitHandler = async (event) => {
     try {
       event.preventDefault(); //it will stop webpage from reloading when we submit the form
-      const { data } = await axios.post(
-        "/api/hotels",
+      const { data } = await api.post(
+        "/hotels",
         { name, contact, address, city },
         { headers: { Authorization: `Bearer ${await getToken()}` } }
       );
@@ -28,7 +28,7 @@ const HotelReg = () => {
         toast.error(data.message)
       }
     } catch (error) {
-       toast.error(data.message)
+       toast.error(error.message)
     }
   };
   return (

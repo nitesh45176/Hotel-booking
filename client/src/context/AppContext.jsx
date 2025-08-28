@@ -20,6 +20,7 @@ export const AppProvider = ({ children }) => {
   const [showHotelReg, setShowHotelReg] = useState(false);
   const [searchedCities, setSearchedCities] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   const fetchRooms = async() => {
     try {
@@ -35,15 +36,44 @@ export const AppProvider = ({ children }) => {
     }
   }
 
-
-
   // 🔑 Get token
   const getToken = () => localStorage.getItem("token");
 
+  // 🔑 Check if token is valid (optional but recommended)
+  const isTokenValid = (token) => {
+    if (!token) return false;
+    
+    try {
+      // For JWT tokens, check expiration
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp * 1000 > Date.now();
+    } catch {
+      // If not JWT or parsing fails, assume it's valid
+      return true;
+    }
+  };
+
   const fetchUser = async () => {
     try {
+      const token = getToken();
+      
+      // 🚨 KEY FIX: Don't make request if no token
+      if (!token) {
+        console.log("No token found, skipping user fetch");
+        setIsLoading(false);
+        return;
+      }
+
+      // Optional: Check token validity
+      if (!isTokenValid(token)) {
+        console.log("Token expired, clearing storage");
+        localStorage.removeItem("token");
+        setIsLoading(false);
+        return;
+      }
+
       const { data } = await api.get("/user", {
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       console.log("Fetched user:", data);
@@ -59,13 +89,39 @@ export const AppProvider = ({ children }) => {
         setIsOwner(data.role === "hotelOwner");
         setSearchedCities(data.recentSearchedCities || []);
       } else {
-        console.warn("User fetch failed, retrying...");
-        setTimeout(() => fetchUser(), 5000);
+        console.warn("User fetch failed:", data.message);
+        toast.error(data.message || "Failed to fetch user");
       }
     } catch (error) {
       console.error("Fetch user failed:", error);
-      toast.error(error.message);
+      
+      // Handle 401 specifically
+      if (error.response?.status === 401) {
+        console.log("Unauthorized - clearing token");
+        localStorage.removeItem("token");
+        setUser(null);
+        setIsOwner(false);
+      } else {
+        toast.error(error.response?.data?.message || error.message || "Failed to fetch user");
+      }
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // 🔑 Function to manually trigger user fetch (call this after login)
+  const refetchUser = async () => {
+    setIsLoading(true);
+    await fetchUser();
+  };
+
+  // 🔑 Function to logout
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+    setIsOwner(false);
+    setSearchedCities([]);
+    navigate("/login"); // or wherever you want to redirect
   };
 
   useEffect(() => {
@@ -74,7 +130,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     fetchRooms();
-  },[])
+  }, []);
 
   const value = {
     currency,
@@ -86,8 +142,12 @@ export const AppProvider = ({ children }) => {
     isOwner,
     setIsOwner,
 
-    api,          // expose the axios instance
+    api,
     getToken,
+    refetchUser, // 🔑 Expose this function
+    logout,      // 🔑 Expose logout function
+    isLoading,   // 🔑 Expose loading state
+
     showHotelReg,
     setShowHotelReg,
     searchedCities,
