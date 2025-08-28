@@ -34,7 +34,7 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: "http://localhost:5173", // your frontend dev URL
+  origin: "https://hotel-booking-umber-phi.vercel.app/", // your frontend dev URL
   credentials: true
 }));
 
