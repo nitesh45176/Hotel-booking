@@ -1,4 +1,4 @@
-import transporter from "../configs/nodemailer.js";
+import { resend } from "../configs/resend.js";
 import { Booking } from "../models/Booking.js"
 import Hotel from "../models/Hotel.js";
 import Room from "../models/Room.js";
@@ -6,7 +6,6 @@ import Room from "../models/Room.js";
 // Function to check availability of room
 const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
   try {
-    console.log("🔍 Checking availability for:", { room, checkInDate, checkOutDate });
     
     const requestCheckIn = new Date(checkInDate);
     const requestCheckOut = new Date(checkOutDate);
@@ -51,13 +50,9 @@ export const checkAvailabilityAPI = async (req, res) => {
 // Function to send booking confirmation email
 const sendBookingConfirmationEmail = async (booking, userEmail, username, roomData) => {
   try {
-    console.log("📧 Attempting to send email to:", userEmail);
     
     const mailOptions = {
-      from: {
-        name: 'Hotel Booking System',
-        address: process.env.SENDER_EMAIL
-      },
+      from:'Hotel Booking System <onboarding@resend.dev>',
       to: userEmail,
       subject: 'Hotel Booking Confirmation - Booking ID: ' + booking._id,
       html: `
@@ -133,7 +128,8 @@ const sendBookingConfirmationEmail = async (booking, userEmail, username, roomDa
       subject: mailOptions.subject
     });
 
-    const info = await transporter.sendMail(mailOptions);
+    const {data, error} = await resend.emails.send(mailOptions)
+
     console.log("✅ Email sent successfully:", {
       messageId: info.messageId,
       accepted: info.accepted,

@@ -1,14 +1,18 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    mongoose.set("strictQuery", true);
 
-    console.log("✅ MongoDB Atlas connected successfully");
-    console.log("📦 Connected to DB:", conn.connection.name);
-    console.log("🖥️ Connected to Cluster:", conn.connection.host);
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err.message);
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+    });
+
+    console.log("✅ MongoDB Atlas connected");
+    console.log("📦 Database:", conn.connection.name);
+  } catch (error) {
+    console.error("❌ MongoDB error:", error.message);
+    throw error; // ⬅️ VERY IMPORTANT
   }
 };
 

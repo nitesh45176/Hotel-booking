@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  // 🔑 FIXED: Move useAppContext to top level of component
   const { refetchUser, api } = useAppContext();
   
   const [showPassword, setShowPassword] = useState(false);
@@ -16,7 +14,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    // 🔑 REMOVED: const { refetchUser, api } = useAppContext(); - this was the problem!
     if (e) e.preventDefault();
     if (!email || !password) {
       toast.error("All fields are required!");
@@ -26,7 +23,7 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
 
-      const res = await api.post("/auth/login", {  // 🔑 FIXED: Remove full URL, use relative path
+      const res = await api.post("/auth/login", { 
         email,
         password,
       }, {
