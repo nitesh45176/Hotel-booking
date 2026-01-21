@@ -37,7 +37,7 @@ app.use(
 );
 
 //API to listen stripe Webooks
-app.post('/api/stripe/webhook', express.raw({type: "application/json"}, stripeWebhook))
+app.post('/api/stripe', express.raw({type: "application/json"}, stripeWebhook))
 
 app.use(express.json());
 
