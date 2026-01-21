@@ -16,6 +16,7 @@ import { useAppContext } from './context/AppContext'
 import Login from './Auth/Login'
 import Signup from './Auth/Signup'
 import About from './components/About'
+import Loader from './components/Loader'
 
 const App = () => {
   const location = useLocation();
@@ -38,6 +39,7 @@ const App = () => {
           <Route path='/rooms' element={<AllRooms />} />
           <Route path='/rooms/:id' element={<RoomDetails />} />
           <Route path='/my-bookings' element={<Mybookings />} />
+          <Route path='/loader/:nextUrl' element={<Loader />} />
 
           {/* Owner Dashboard Routes - NESTED */}
           <Route path='/owner' element={<Layout />}>

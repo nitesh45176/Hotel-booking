@@ -12,6 +12,7 @@ import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import authRouter from "./routes/authRoutes.js";
+import { stripeWebhook } from "./controllers/stripeWebhook.js";
 
 const app = express();
 
@@ -34,6 +35,9 @@ app.use(
     credentials: true,
   })
 );
+
+//API to listen stripe Webooks
+app.post('/api/stripe/webhook', express.raw({type: "application/json"}, stripeWebhook))
 
 app.use(express.json());
 

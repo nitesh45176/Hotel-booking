@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import resend from "../configs/resend.js";
 import { Booking } from "../models/Booking.js"
 import Hotel from "../models/Hotel.js";
@@ -316,17 +317,62 @@ export const testEmail = async (req, res) => {
   }
 };
 
-export const stripePayment = async(req,res)=> {
-   try {
-     const {bookingId} = req.body;
+export const stripePayment = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
 
-     const booking = await Booking.findById(bookingId)
-     const roomData = await  Room.findById(booking.room).populate('hotel')
-     const totalPrice = booking.totalPrice;
-     const {origin} = req.headers;
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking ID is required",
+      });
+    }
 
-      
-   } catch (error) {
-    
-   }
-}
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    const roomData = await Room.findById(booking.room).populate("hotel");
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: roomData.hotel.name,
+            },
+            unit_amount: booking.totalPrice * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.CLIENT_URL}/my-bookings?payment=success`,
+      cancel_url: `${process.env.CLIENT_URL}/my-bookings?payment=cancel`,
+      metadata: {
+        bookingId,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      url: session.url, // ✅ THIS is what frontend needs
+    });
+
+  } catch (error) {
+    console.error("Stripe payment error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Stripe payment failed",
+    });
+  }
+};

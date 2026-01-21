@@ -160,9 +160,8 @@ export const AppProvider = ({ children }) => {
     isOwner,
     setIsOwner,
 
-    api,         // 🔐 private
-    publicApi,   // 🌐 public (login, signup)
-
+    api,        
+    publicApi,  
     refetchUser,
     logout,
     isLoading,
@@ -173,6 +172,7 @@ export const AppProvider = ({ children }) => {
     setSearchedCities,
     rooms,
     setRooms,
+    getToken
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
