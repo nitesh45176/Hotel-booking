@@ -16,6 +16,11 @@ import { stripeWebhook } from "./controllers/stripeWebhook.js";
 
 const app = express();
 
+
+//API to listen stripe Webooks
+app.post('/api/stripe', express.raw({type: "application/json"}, stripeWebhook))
+
+
 const allowedOrigins = [
   "http://localhost:5173",
   "https://hotel-booking-beta-ochre.vercel.app",
@@ -36,8 +41,6 @@ app.use(
   })
 );
 
-//API to listen stripe Webooks
-app.post('/api/stripe', express.raw({type: "application/json"}, stripeWebhook))
 
 app.use(express.json());
 
