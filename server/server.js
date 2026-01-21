@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -16,25 +15,27 @@ import authRouter from "./routes/authRoutes.js";
 
 const app = express();
 
-
 const allowedOrigins = [
   "http://localhost:5173",
   "https://hotel-booking-beta-ochre.vercel.app",
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json());
-
 
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
@@ -42,12 +43,11 @@ app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
-
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
-    await connectDB();           // ⬅️ WAIT HERE
+    await connectDB();
     connectCloudinary();
 
     app.listen(PORT, () => {

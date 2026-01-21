@@ -1,4 +1,4 @@
-import { resend } from "../configs/resend.js";
+import resend from "../configs/resend.js";
 import { Booking } from "../models/Booking.js"
 import Hotel from "../models/Hotel.js";
 import Room from "../models/Room.js";
