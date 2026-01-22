@@ -16,11 +16,14 @@ import { stripeWebhook } from "./controllers/stripeWebhook.js";
 
 const app = express();
 
+// ✅ CRITICAL: Webhook route MUST come BEFORE express.json() and BEFORE cors()
+app.post(
+  '/api/stripe/webhook',  // ✅ Better URL
+  express.raw({ type: "application/json" }),  // ✅ Fixed syntax
+  stripeWebhook  // ✅ No parentheses - pass the function reference
+);
 
-//API to listen stripe Webooks
-app.post('/api/stripe', express.raw({type: "application/json"}, stripeWebhook))
-
-
+// ✅ NOW add cors and express.json
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -28,7 +31,6 @@ app.use(cors({
   ],
   credentials: true,
 }));
-
 
 app.use(express.json());
 

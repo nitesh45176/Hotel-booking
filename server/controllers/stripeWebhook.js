@@ -1,9 +1,11 @@
 import Stripe from "stripe";
 import { Booking } from "../models/Booking.js";
+import Room from "../models/Room.js"; // ✅ Added
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const stripeWebhook = async (req, res) => {
+   console.log("🔥 STRIPE WEBHOOK HIT");
   const sig = req.headers["stripe-signature"];
 
   let event;
@@ -24,22 +26,36 @@ export const stripeWebhook = async (req, res) => {
       const session = event.data.object;
       const bookingId = session.metadata?.bookingId;
 
-      await Booking.findByIdAndUpdate(bookingId, {
-        isPaid: true,
-        status: "confirmed",
-        paymentMethod: "Stripe",
-      });
+      if (!bookingId) {
+        console.error("❌ No bookingId in session metadata");
+        return res.status(400).json({ error: "Missing bookingId" });
+      }
 
-      console.log("✅ Booking paid via checkout.session.completed");
+      const updatedBooking = await Booking.findByIdAndUpdate(
+        bookingId,
+        {
+          isPaid: true,
+          status: "confirmed",
+          paymentMethod: "Stripe",
+        },
+        { new: true } // ✅ Returns updated document
+      );
+
+      if (!updatedBooking) {
+        console.error("❌ Booking not found:", bookingId);
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      console.log("✅ Booking paid via checkout.session.completed:", updatedBooking);
     }
 
-    // ✅ CASE 2: Payment Intent (Stripe is sending this)
+    // ✅ CASE 2: Payment Intent (fallback)
     if (event.type === "payment_intent.succeeded") {
       const intent = event.data.object;
 
-      // Retrieve session to get metadata
       const sessions = await stripe.checkout.sessions.list({
         payment_intent: intent.id,
+        limit: 1,
       });
 
       const bookingId = sessions.data[0]?.metadata?.bookingId;
@@ -62,3 +78,68 @@ export const stripeWebhook = async (req, res) => {
   }
 };
 
+export const stripePayment = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    if (!bookingId) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking ID is required",
+      });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    const roomData = await Room.findById(booking.room).populate("hotel");
+
+    if (!roomData) {
+      return res.status(404).json({
+        success: false,
+        message: "Room not found",
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: roomData.hotel.name,
+              description: `Room booking from ${booking.checkInDate.toLocaleDateString()} to ${booking.checkOutDate.toLocaleDateString()}`,
+            },
+            unit_amount: Math.round(booking.totalPrice * 100), // ✅ Ensure integer
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.CLIENT_URL}/my-bookings?payment=success`,
+      cancel_url: `${process.env.CLIENT_URL}/my-bookings?payment=cancel`,
+      metadata: {
+        bookingId: bookingId.toString(), // ✅ Ensure string
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      url: session.url,
+    });
+  } catch (error) {
+    console.error("Stripe payment error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Stripe payment failed",
+      error: error.message,
+    });
+  }
+};

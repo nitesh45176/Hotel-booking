@@ -20,16 +20,17 @@ const Navbar = () => {
   const location = useLocation();
   const {user, navigate, isOwner, setShowHotelReg} = useAppContext();
 
+  // ✅ Check if we're on home page
+  const isHomePage = location.pathname === "/";
+
   // Create navLinks dynamically based on user login status
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Hotels", path: "/rooms" },
-    ...(user ? [{ name: "My Bookings", path: "/my-bookings" }] : []), // Only show if user is logged in
+    ...(user ? [{ name: "My Bookings", path: "/my-bookings" }] : []),
     { name: "About", path: "/about" },
   ];
 
-  // if we are not on home page (when we scrolled down OR change the route) then the navbar will have have some effect 
-  // (bg will be white of navbar)
   useEffect(() => {
     const handleScroll = () => {
       if (location.pathname !== "/") {
@@ -39,7 +40,7 @@ const Navbar = () => {
       }
     };
 
-    handleScroll(); // ✅ run once on mount
+    handleScroll();
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -55,7 +56,10 @@ const Navbar = () => {
     >
       {/* Logo */}
       <Link to="/">
-        <PlaceStayLogo />
+        <PlaceStayLogo 
+          isLandingPage={isHomePage}  // ✅ Changed from true to isHomePage
+          className="h-16 w-auto cursor-pointer"
+        />
       </Link>
 
       {/* Desktop Nav */}
@@ -98,15 +102,18 @@ const Navbar = () => {
               height="h-10"
               style="text-sm"
             />
+            {/* ✅ Updated logout button with color change */}
             <button
               onClick={() => {
                 localStorage.removeItem("token");
                 window.location.reload();
               }}
-              className="flex items-center gap-2 text-white hover:text-gray-300 cursor-pointer transition-all duration-300"
+              className={`flex items-center gap-2 cursor-pointer transition-colors duration-300 ${
+                isScrolled ? 'text-gray-700 hover:text-gray-900' : 'text-white hover:text-gray-200'
+              }`}
             >
               <LogOut className="w-5 h-5" />
-              Logout
+              <span className="font-medium">Logout</span>
             </button>
           </>
         ) : (
